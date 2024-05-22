@@ -6,6 +6,7 @@ const isEmbedded = queryParams.get("frame_id") != null;
 let discordSdk;
 
 const initiateDiscordSDK = async () => {
+  
   if (isEmbedded) {
     discordSdk = new DiscordSDK(import.meta.env.VITE_CLIENT_ID);
   } else {
@@ -28,7 +29,7 @@ const initiateDiscordSDK = async () => {
 
     discordSdk._updateCommandMocks({
       authenticate: async () => {
-        return await {
+        return {
           access_token: "mock_token",
           user: {
             username: mockUserId,
