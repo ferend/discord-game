@@ -17,6 +17,11 @@ export class GameOver extends Scene
         let scale = Math.max(scaleX, scaleY);
         bg.setScale(scale).setScrollFactor(0);
 
+        const highScore = localStorage.getItem('highScore') || 0;
+        this.add.text(400, 200, `High Score: ${highScore}`, {
+            fontFamily: 'Arial', fontSize: 36, color: '#ffffff'
+        }).setOrigin(0.5);
+
         this.add.text(this.game.config.width * 0.5, 384, 'Game Over', {
             fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,

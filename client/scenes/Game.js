@@ -1,18 +1,19 @@
 import { Scene } from 'phaser';
+import { discordSdk } from "../utils/discordSdk.js";
+import { Player } from '../models/Player.js';
+import { Enemy } from '../models/Enemy.js';
 
-export class Game extends Scene
-{
-    constructor ()
-    {
+export class Game extends Scene {
+    constructor() {
         super('Game');
         this.shots = 0;
         this.maxShots = 6;
         this.playerHealth = 3;
         this.isReloading = false;
+        this.score = 0; 
     }
 
-    create ()
-    {
+    create() {
         this.cameras.main.setBackgroundColor(0x00ff00);
 
         const bg = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background');
@@ -21,8 +22,11 @@ export class Game extends Scene
         let scale = Math.max(scaleX, scaleY);
         bg.setScale(scale).setScrollFactor(0);
 
-        this.player = this.physics.add.sprite(this.cameras.main.width / 2, this.cameras.main.height - 50, 'player');
-        this.player.setCollideWorldBounds(true);
+        this.scoreText = this.add.text(10, 70, `Score: ${this.score}`, {
+            fontFamily: 'Arial', fontSize: 24, color: '#ffffff'
+        });
+
+        this.player = new Player(this, this.cameras.main.width / 2, this.cameras.main.height - 50, 'player');
         this.enemies = this.physics.add.group();
         this.bullets = this.physics.add.group();
 
@@ -43,7 +47,7 @@ export class Game extends Scene
             fontFamily: 'Arial', fontSize: 24, color: '#ffffff'
         });
 
-        this.physics.add.overlap(this.enemies, this.player, this.enemyHitsPlayer, null, this);
+        this.physics.add.overlap(this.enemies, this.player.sprite, this.enemyHitsPlayer, null, this);
     }
 
     shoot(pointer) {
@@ -52,7 +56,7 @@ export class Game extends Scene
         }
 
         if (this.shots < this.maxShots) {
-            const bullet = this.bullets.create(this.player.x, this.player.y, 'bullet');
+            const bullet = this.bullets.create(this.player.sprite.x, this.player.sprite.y, 'bullet');
             this.physics.moveTo(bullet, pointer.x, pointer.y, 500);
             this.shots++;
             this.bulletsText.setText(`Bullets: ${this.maxShots - this.shots}`);
@@ -71,27 +75,70 @@ export class Game extends Scene
         }, [], this);
     }
 
-    spawnEnemy() {
-        const enemy = this.enemies.create(Phaser.Math.Between(0, this.cameras.main.width), 0, 'enemy');
-        this.physics.moveTo(enemy, this.player.x, this.player.y, 50);
+    spawnEnemy()  {
+        const enemy = new Enemy(this, Phaser.Math.Between(0, this.cameras.main.width), 0, 'enemy');
+        this.enemies.add(enemy.sprite);
+
+        this.physics.moveTo(enemy.sprite, this.player.sprite.x, this.player.sprite.y, 50);
     }
 
     update() {
         this.physics.overlap(this.bullets, this.enemies, this.hitEnemy, null, this);
-        this.physics.overlap(this.enemies, this.player, this.enemyHitsPlayer, null, this);
     }
 
     hitEnemy(bullet, enemy) {
         bullet.destroy();
         enemy.destroy();
+        this.score += 10; 
+        this.scoreText.setText(`Score: ${this.score}`);
     }
 
-    enemyHitsPlayer(player, enemy) {
+    async enemyHitsPlayer(player, enemy) {
         enemy.destroy();
         this.playerHealth--;
         this.healthText.setText(`Health: ${this.playerHealth}`);
+        await this.updateDiscordStatus();
         if (this.playerHealth <= 0) {
-            this.scene.start("GameOver" )
+            await this.sendDiscordMessage("Game Over! Better luck next time.");
+            // Check for high score and save it
+            const highScore = localStorage.getItem('highScore');
+            if (highScore === null || this.score > parseInt(highScore)) {
+                localStorage.setItem('highScore', this.score);
+            }
+            this.scene.start("GameOver")
+        }
+    }
+
+    async updateDiscordStatus() {
+        try {
+            await discordSdk.setActivity({
+                state: `Playing: Health ${this.playerHealth}, Bullets ${this.maxShots - this.shots}`,
+                details: "Playing My Phaser Game",
+                startTimestamp: Date.now()
+            });
+        } catch (error) {
+            console.error('Failed to update Discord status:', error);
+        }
+    }
+
+    async sendDiscordMessage(message) {
+        try {
+            const channelId = process.env.VITE_DISCORD_CLIENT_ID;
+            const url = `https://discord.com/api/v9/channels/${channelId}/messages`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: message })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+        } catch (error) {
+            console.error('Failed to send Discord message:', error);
         }
     }
     
