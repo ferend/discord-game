@@ -1,4 +1,4 @@
-import { initiateDiscordSDK, discordSdk } from './utils/discordSdk';
+import { initiateDiscordSDK, discordSdk } from './src/utils/discordSdk';
 import { gameConfig } from './gameConfig.js' 
 
 

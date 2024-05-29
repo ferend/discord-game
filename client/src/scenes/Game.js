@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import { discordSdk } from "../utils/discordSdk.js";
-import { Player } from '../models/Player.js';
-import { Enemy } from '../models/Enemy.js';
+import { Player } from '../entites/Player.js';
+import { Enemy } from '../entites/Enemy.js';
 
 export class Game extends Scene {
     constructor() {

@@ -1,8 +1,8 @@
-import {Boot} from "./scenes/Boot.js";
-import {Preloader} from "./scenes/Preloader.js";
-import {MainMenu} from "./scenes/MainMenu.js";
-import {Game} from "./scenes/Game.js";
-import {GameOver} from "./scenes/GameOver.js";
+import {Boot} from "./src/scenes/Boot.js";
+import {Preloader} from "./src/scenes/Preloader.js";
+import {MainMenu} from "./src/scenes/MainMenu.js";
+import {Game} from "./src/scenes/Game.js";
+import {GameOver} from "./src/scenes/GameOver.js";
 
 export const gameConfig = {
     type: Phaser.AUTO,
